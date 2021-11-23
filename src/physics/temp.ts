@@ -1,0 +1,9 @@
+/*
+
+... create buffer with defined number of instances... for both main and worker threads
+
+... main thread tells the worker it wants the latest...
+
+... worker thread iterates the physics world every X moment...
+
+ */

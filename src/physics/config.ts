@@ -1,0 +1,2 @@
+export const DEFAULT_STEP_RATE = 1000 / 60
+export const DEFAULT_NUMBER_OF_PHYSICS_OBJECTS = 512
