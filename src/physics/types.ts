@@ -13,6 +13,8 @@ export enum MainMessages {
 }
 
 export enum WorkerMessages {
+    WORKER_READY = '_WORKER_READY',
+    WORKER_READY_ACKNOWLEDGED = '_WORKER_READY_ACKNOWLEDGED',
     PHYSICS_STEP = '_PHYSICS_STEP',
     FRAME = '_FRAME',
 }

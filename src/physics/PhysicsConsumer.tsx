@@ -1,10 +1,12 @@
-import React, {createContext, MutableRefObject, useCallback, useContext, useEffect, useRef} from "react"
+import React, {createContext, MutableRefObject, useCallback, useContext, useEffect, useRef, useState} from "react"
 import {MainMessages, MapBufferDataToObjectRefFn, WorkerMessages} from "./types";
 import {useFrame} from "@react-three/fiber";
 import {useEffectRef, useSubscriptionCallbacks} from "./utils/hooks";
 import {DEFAULT_STEP_RATE} from "./config";
 import {Object3D} from "three";
 import {useWorkerMessaging, WorkerMessagingProvider} from "./shared/WorkerMessagingProvider";
+import {SyncData} from "../misc/SyncData";
+import {CustomMessages} from "../misc/CustomMessages";
 
 const areBuffersReady = (buffers: any) => {
     return Object.values(buffers).reduce((safe: boolean, buffer: any) => {
@@ -129,7 +131,7 @@ export const useOnPhysicsUpdate = (callback: (delta: number) => void) => {
 
 }
 
-export const usePhysicsRef = (id: string) => {
+export const usePhysicsRef = (id: string, active: boolean = true) => {
 
     const {
         subscribeObject,
@@ -138,8 +140,10 @@ export const usePhysicsRef = (id: string) => {
     const ref = useRef<any>()
 
     useEffect(() => {
-        return subscribeObject(id, ref)
-    }, [])
+        if (active) {
+            return subscribeObject(id, ref)
+        }
+    }, [active])
 
     return ref
 }
@@ -157,6 +161,9 @@ export const PhysicsConsumer: React.FC<PhysicsConsumerProps> = ({children, worke
         getDelta,
     } = useGetDelta(stepRate)
 
+    const [workerReady, setWorkerReady] = useState(false)
+    const [workerReadyAcknowledged, setWorkerReadyAcknowledged] = useState(false)
+
     const {
         updateBodiesOrder,
         subscribe: subscribeToOnPhysicsUpdate,
@@ -166,6 +173,7 @@ export const PhysicsConsumer: React.FC<PhysicsConsumerProps> = ({children, worke
     } = usePhysicsSubscriptions(mapBufferDataToObjectRef)
 
     const loop = useCallback(() => {
+        if (!workerReady) return
         if (areBuffersReady(buffers)) {
             const transfer: any[] = []
             Object.values(buffers).forEach((buffer: any) => {
@@ -176,7 +184,7 @@ export const PhysicsConsumer: React.FC<PhysicsConsumerProps> = ({children, worke
                 buffers,
             }, transfer)
         }
-    }, [worker, buffers])
+    }, [worker, buffers, workerReady])
 
     useFrame(loop)
 
@@ -185,10 +193,34 @@ export const PhysicsConsumer: React.FC<PhysicsConsumerProps> = ({children, worke
         postMessage: postWorkerMessage,
     } = useWorkerMessaging(worker)
 
+    useEffect(() => {
+        if (!workerReadyAcknowledged) {
+            const message = () => {
+                worker.postMessage({
+                    type: WorkerMessages.WORKER_READY,
+                })
+            }
+            message()
+            const interval = setInterval(message, 50)
+            return () => {
+                clearInterval(interval)
+            }
+        }
+    }, [workerReadyAcknowledged])
+
     const onMessage = useCallback((message: any) => {
         const data = message.data
 
         switch (data?.type) {
+            case WorkerMessages.WORKER_READY:
+                setWorkerReady(true)
+                worker.postMessage({
+                    type: WorkerMessages.WORKER_READY_ACKNOWLEDGED,
+                })
+                break;
+            case WorkerMessages.WORKER_READY_ACKNOWLEDGED:
+                setWorkerReadyAcknowledged(true)
+                break;
             case WorkerMessages.PHYSICS_STEP:
 
                 const delta = getDelta()
@@ -223,7 +255,11 @@ export const PhysicsConsumer: React.FC<PhysicsConsumerProps> = ({children, worke
             subscribeObject,
         }}>
             <WorkerMessagingProvider postWorkerMessage={postWorkerMessage} subscribeToWorkerMessages={subscribeToWorkerMessages}>
-                {children}
+                <CustomMessages>
+                    <SyncData>
+                        {children}
+                    </SyncData>
+                </CustomMessages>
             </WorkerMessagingProvider>
         </Context.Provider>
     )

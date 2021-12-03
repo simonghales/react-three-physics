@@ -1,6 +1,6 @@
 {
   "name": "react-three-physics",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "main": "dist/react-three-physics.cjs.js",
   "module": "dist/react-three-physics.esm.js",
   "author": "Simon Hales",
@@ -22,9 +22,11 @@
     "three": ">=0.134.0"
   },
   "scripts": {
-    "build": "preconstruct build"
+    "build": "preconstruct build",
+    "yalc:build": "yarn build && yalc publish --push"
   },
   "dependencies": {
+    "hotkeys-js": "^3.8.7",
     "planck": "^1.0.0-alpha.2",
     "react-nil": "^0.0.3"
   }

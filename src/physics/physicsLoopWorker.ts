@@ -14,6 +14,35 @@ export const createNewPhysicsLoopWebWorker = (stepRate: number) => {
             var lastAccumulation = getNow();
             var now = getNow();
             var numberOfUpdates = 0;
+            var timeout;
+            var secondTimeout;
+            var lastStep = 0;
+            var timeSinceLastStep = 0;
+            
+            self.addEventListener("message", function(event) {
+                if (event.data !== "FRAME") {
+                    return;
+                }
+                if (timeout) {
+                    clearTimeout(timeout);
+                }
+                accumulator = 0;
+                now = getNow();
+                lastFrame = now;
+                lastAccumulation = now;
+                timeSinceLastStep = now - lastStep;
+                // if (timeSinceLastStep >= updateRate - 2) {
+                //     lastAccumulation = now;
+                //     sendStep();
+                // }
+                timeout = setTimeout(step, updateRate - 1);
+            });
+            
+            function sendStep() {
+                self.postMessage('step');
+                lastStep = getNow();
+                accumulator -= maxAccumulator;
+            }
             
             function accumulate() {
                 now = getNow();
@@ -26,16 +55,17 @@ export const createNewPhysicsLoopWebWorker = (stepRate: number) => {
                 }
                 numberOfUpdates = Math.floor(accumulator / maxAccumulator);
                 for (var i = 0; i < numberOfUpdates; i++) {
-                    self.postMessage('step');
-                    accumulator -= maxAccumulator;
+                    sendStep();
                 }
             }
         
             function step() {
                 
                 accumulate();
-                
-                setTimeout(step, updateRate - 2 - accumulator);
+                if (timeout) {
+                    clearTimeout(timeout);
+                }
+                timeout = setTimeout(step, updateRate - 2 - accumulator);
                 
             }
             

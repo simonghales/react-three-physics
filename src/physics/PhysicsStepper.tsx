@@ -3,15 +3,18 @@ import {createNewPhysicsLoopWebWorker} from "./physicsLoopWorker";
 import {getNow} from "./utils/time";
 
 let now = 0
+let timePassed = 0
 let delta = 0
 
 export const PhysicsStepper: React.FC<{
+    setOnFrameCallback: any,
     paused: boolean,
     stepRate: number,
     stepWorld: (delta: number) => void,
     onWorldStep: (delta: number) => void,
     updateSubscriptions: (delta: number) => void,
 }> = ({
+           setOnFrameCallback,
           paused,
           stepRate,
           onWorldStep,
@@ -28,10 +31,12 @@ export const PhysicsStepper: React.FC<{
     } = useMemo(() => ({
         stepWorld: () => {
             now = getNow()
-            delta = now - localStateRef.current.lastUpdate
+            timePassed = now - localStateRef.current.lastUpdate
+            if (timePassed <= 3) return
+            delta = timePassed / stepRate
             localStateRef.current.lastUpdate = now
             if (paused) return
-            passedStepWorld(delta)
+            passedStepWorld(timePassed)
             onWorldStep(delta)
             updateSubscriptions(delta)
         }
@@ -49,21 +54,38 @@ export const PhysicsStepper: React.FC<{
 
         let unmounted = false
 
-        const worker = createNewPhysicsLoopWebWorker(stepRate)
+        let worker: any;
 
-        worker.onmessage = (event) => {
-            if (event.data === 'step') {
-                if (unmounted) {
-                    console.warn('step called but worker should be unmounted')
-                    return
+        const createWorker = () => {
+            worker = createNewPhysicsLoopWebWorker(stepRate)
+            worker.onmessage = (event: any) => {
+                if (event.data === 'step') {
+                    if (unmounted) {
+                        console.warn('step called but worker should be unmounted')
+                        return
+                    }
+                    stepWorldRef.current()
                 }
-                stepWorldRef.current()
             }
         }
 
+
+
+        setOnFrameCallback(() => {
+            if (worker) {
+                worker.postMessage("FRAME")
+                stepWorldRef.current()
+            } else {
+                createWorker()
+                worker.postMessage("FRAME")
+            }
+        })
+
         return () => {
             unmounted = true
-            worker.terminate()
+            if (worker) {
+                worker.terminate()
+            }
         }
 
     }, [paused])

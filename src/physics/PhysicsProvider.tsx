@@ -5,6 +5,9 @@ import {useEffectRef} from "./utils/hooks";
 import {ConvertBodyDataToBufferDataFn, CopyBodyDataFn, GetBodyDataFn, MainMessages, WorkerMessages} from "./types";
 import {getNow} from "./utils/time";
 import {useWorkerMessaging, WorkerMessagingProvider} from "./shared/WorkerMessagingProvider";
+import {SyncData} from "../misc/SyncData";
+import {CustomMessages} from "../misc/CustomMessages";
+import {sharedData} from "./shared/data";
 
 export type SubscribeFnRef = MutableRefObject<(delta: number) => void>
 
@@ -63,6 +66,8 @@ export const usePhysicsSubscriptions = () => {
 
 }
 
+let now = 0
+
 export const useSyncedBodies = (
     stepRate: number,
     getBodyData: GetBodyDataFn,
@@ -106,14 +111,16 @@ export const useSyncedBodies = (
 
     const updateBodies = useCallback(() => {
 
+        now = getNow()
+
+        localStateRef.current.lastUpdate = now
+
         Object.entries(localStateRef.current.storedBodies).forEach(([id, body]) => {
             if (localStateRef.current.latestBodiesData[id]) {
                 localStateRef.current.previousBodiesData[id] = copyBodyData(localStateRef.current.latestBodiesData[id], localStateRef.current.previousBodiesData[id])
             }
             localStateRef.current.latestBodiesData[id] = getBodyData(body, localStateRef.current.latestBodiesData[id])
         })
-
-        localStateRef.current.lastUpdate = getNow()
 
     }, [getBodyData])
 
@@ -169,11 +176,30 @@ const useHandleWorkerStepMessaging = (
     getBodiesBufferData: any,
 ) => {
 
+    const localStateRef = useRef<{
+        onFrameCallback: any,
+    }>({
+        onFrameCallback: null,
+    })
+
+    const setOnFrameCallback = useCallback((callback: any) => {
+        localStateRef.current.onFrameCallback = callback
+        return () => {
+            localStateRef.current.onFrameCallback = null
+        }
+    }, [])
+
     const onMessage = useCallback((message: any) => {
 
         const data = message.data
 
         if (data?.type === MainMessages.REQUEST_FRAME) {
+
+            sharedData.lastFrameTimestamp = Date.now()
+
+            if (localStateRef.current.onFrameCallback) {
+                localStateRef.current.onFrameCallback()
+            }
 
             Object.entries(data.buffers).forEach(([id, buffer]) => {
                 buffers[id] = buffer
@@ -201,6 +227,10 @@ const useHandleWorkerStepMessaging = (
     useEffect(() => {
         return subscribeToWorkerMessages(onMessageRef)
     }, [])
+
+    return {
+        setOnFrameCallback,
+    }
 
 }
 
@@ -234,6 +264,46 @@ export const PhysicsProvider: React.FC<{
         postMessage: postWorkerMessage,
     } = useWorkerMessaging(worker)
 
+    // @ts-ignore
+    const [workerReady, setWorkerReady] = useState(false)
+    const [workerReadyAcknowledged, setWorkerReadyAcknowledged] = useState(false)
+
+    useEffect(() => {
+        if (!workerReadyAcknowledged) {
+            const message = () => {
+                worker.postMessage({
+                    type: WorkerMessages.WORKER_READY,
+                })
+            }
+            message()
+            const interval = setInterval(message, 50)
+            return () => {
+                clearInterval(interval)
+            }
+        }
+    }, [workerReadyAcknowledged])
+
+    const onMessage = useCallback((message: any) => {
+        const data = message.data
+        switch (data?.type) {
+            case WorkerMessages.WORKER_READY:
+                setWorkerReady(true)
+                worker.postMessage({
+                    type: WorkerMessages.WORKER_READY_ACKNOWLEDGED,
+                })
+                break;
+            case WorkerMessages.WORKER_READY_ACKNOWLEDGED:
+                setWorkerReadyAcknowledged(true)
+                break;
+        }
+    }, [])
+
+    const onMessageRef = useEffectRef(onMessage)
+
+    useEffect(() => {
+        return subscribeToWorkerMessages(onMessageRef)
+    }, [])
+
     const {
         removeBody,
         addBody,
@@ -241,7 +311,9 @@ export const PhysicsProvider: React.FC<{
         getBodiesBufferData,
     } = useSyncedBodies(stepRate, getBodyData, copyBodyData, convertBodyDataToBufferData)
 
-    useHandleWorkerStepMessaging(buffers, subscribeToWorkerMessages, postWorkerMessage, getBodiesBufferData)
+    const {
+        setOnFrameCallback,
+    } = useHandleWorkerStepMessaging(buffers, subscribeToWorkerMessages, postWorkerMessage, getBodiesBufferData)
 
     const onWorldStep = useCallback((delta: number) => {
 
@@ -267,8 +339,12 @@ export const PhysicsProvider: React.FC<{
         }}>
             <WorkerMessagingProvider subscribeToWorkerMessages={subscribeToWorkerMessages}
                                      postWorkerMessage={postWorkerMessage}>
-                <PhysicsStepper updateSubscriptions={updateSubscriptions} stepWorld={stepWorld} onWorldStep={onWorldStep} stepRate={stepRate} paused={paused}/>
-                {children}
+                <PhysicsStepper setOnFrameCallback={setOnFrameCallback} updateSubscriptions={updateSubscriptions} stepWorld={stepWorld} onWorldStep={onWorldStep} stepRate={stepRate} paused={paused}/>
+                <CustomMessages>
+                    <SyncData>
+                        {children}
+                    </SyncData>
+                </CustomMessages>
             </WorkerMessagingProvider>
         </PhysicsProviderContext.Provider>
     )
