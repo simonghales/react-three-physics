@@ -15,10 +15,25 @@ export const PhysicsProviderContext = createContext<{
     removeBody: (id: string) => void,
     addBody: (id: string, body: any) => () => void,
     subscribe: (callbackRef: SubscribeFnRef) => () => void,
+    subscribeBeforeStep: (callbackRef: SubscribeFnRef) => () => void,
 }>(null!)
 
 export const useAddBody = () => {
     return useContext(PhysicsProviderContext).addBody
+}
+
+export const useOnPrePhysicsUpdate = (callback: (delta: number) => void) => {
+
+    const {
+        subscribeBeforeStep,
+    } = useContext(PhysicsProviderContext)
+
+    const callbackRef = useEffectRef(callback)
+
+    useEffect(() => {
+        return subscribeBeforeStep(callbackRef)
+    }, [subscribeBeforeStep])
+
 }
 
 export const useOnPhysicsUpdate = (callback: (delta: number) => void) => {
@@ -39,9 +54,11 @@ export const usePhysicsSubscriptions = () => {
 
     const localStateRef = useRef<{
         subscriptions: Record<string, SubscribeFnRef>,
+        beforeStepSubscriptions: Record<string, SubscribeFnRef>,
         idCount: number,
     }>({
         subscriptions: {},
+        beforeStepSubscriptions: {},
         idCount: 0,
     })
 
@@ -53,8 +70,22 @@ export const usePhysicsSubscriptions = () => {
         }
     }, [])
 
+    const subscribeBeforeStep = useCallback((callbackRef: SubscribeFnRef) => {
+        const id = localStateRef.current.idCount += 1
+        localStateRef.current.beforeStepSubscriptions[id] = callbackRef
+        return () => {
+            delete localStateRef.current.beforeStepSubscriptions[id]
+        }
+    }, [])
+
     const updateSubscriptions = useCallback((delta: number) => {
         Object.values(localStateRef.current.subscriptions).forEach((callbackRef) => {
+            callbackRef.current(delta)
+        })
+    }, [])
+
+    const updateBeforeStepSubscriptions = useCallback((delta: number) => {
+        Object.values(localStateRef.current.beforeStepSubscriptions).forEach((callbackRef) => {
             callbackRef.current(delta)
         })
     }, [])
@@ -62,6 +93,8 @@ export const usePhysicsSubscriptions = () => {
     return {
         subscribe,
         updateSubscriptions,
+        subscribeBeforeStep,
+        updateBeforeStepSubscriptions,
     }
 
 }
@@ -329,17 +362,20 @@ export const PhysicsProvider: React.FC<{
     const {
         subscribe,
         updateSubscriptions,
+        subscribeBeforeStep,
+        updateBeforeStepSubscriptions,
     } = usePhysicsSubscriptions()
 
     return (
         <PhysicsProviderContext.Provider value={{
             subscribe,
+            subscribeBeforeStep,
             removeBody,
             addBody,
         }}>
             <WorkerMessagingProvider subscribeToWorkerMessages={subscribeToWorkerMessages}
                                      postWorkerMessage={postWorkerMessage}>
-                <PhysicsStepper setOnFrameCallback={setOnFrameCallback} updateSubscriptions={updateSubscriptions} stepWorld={stepWorld} onWorldStep={onWorldStep} stepRate={stepRate} paused={paused}/>
+                <PhysicsStepper setOnFrameCallback={setOnFrameCallback} updateBeforeStepSubscriptions={updateBeforeStepSubscriptions} updateSubscriptions={updateSubscriptions} stepWorld={stepWorld} onWorldStep={onWorldStep} stepRate={stepRate} paused={paused}/>
                 <CustomMessages>
                     <SyncData>
                         {children}

@@ -13,6 +13,7 @@ export const PhysicsStepper: React.FC<{
     stepWorld: (delta: number) => void,
     onWorldStep: (delta: number) => void,
     updateSubscriptions: (delta: number) => void,
+    updateBeforeStepSubscriptions: (delta: number) => void,
 }> = ({
            setOnFrameCallback,
           paused,
@@ -20,6 +21,7 @@ export const PhysicsStepper: React.FC<{
           onWorldStep,
           stepWorld: passedStepWorld,
           updateSubscriptions,
+           updateBeforeStepSubscriptions,
       }) => {
 
     const localStateRef = useRef({
@@ -36,6 +38,7 @@ export const PhysicsStepper: React.FC<{
             delta = timePassed / stepRate
             localStateRef.current.lastUpdate = now
             if (paused) return
+            updateBeforeStepSubscriptions(delta)
             passedStepWorld(timePassed)
             onWorldStep(delta)
             updateSubscriptions(delta)

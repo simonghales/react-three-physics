@@ -180,7 +180,7 @@ export const SyncComponent: React.FC<{
 }
 
 export const SyncableComponents: React.FC<{
-    components: Record<string, React.FC>
+    components: Record<string, React.FC<any>>
 }> = ({children, components}) => {
 
     const [workerReady, setWorkerReady] = useState(false)

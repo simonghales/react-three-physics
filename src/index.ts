@@ -1,7 +1,7 @@
 import { createWorkerApp } from "./createWorkerApp"
 export * from "./physics/planckjs"
 import {useOnPhysicsUpdate as useOnWorkerPhysicsUpdate, usePhysicsRef} from "./physics/PhysicsConsumer";
-import {useAddBody, useOnPhysicsUpdate} from "./physics/PhysicsProvider";
+import {useAddBody, useOnPhysicsUpdate, useOnPrePhysicsUpdate} from "./physics/PhysicsProvider";
 import {SyncableComponents, SyncComponent} from "./misc/SyncableComponents";
 import { useTransmitData } from "./misc/SyncData";
 import { useSyncData } from "./misc/SyncData";
@@ -16,6 +16,7 @@ export {
     usePhysicsRef,
     useOnWorkerPhysicsUpdate,
     useOnPhysicsUpdate,
+    useOnPrePhysicsUpdate,
     useAddBody,
     SyncableComponents,
     SyncComponent,

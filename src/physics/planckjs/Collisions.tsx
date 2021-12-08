@@ -45,8 +45,8 @@ export const PlanckjsCollisions: React.FC<{
 }> = ({children, world, log}) => {
 
     const localStateRef = useRef<{
-        onCollisionBegin: Record<string, MutableRefObject<(fixture: Fixture) => void>>,
-        onCollisionEnd: Record<string, MutableRefObject<(fixture: Fixture) => void>>,
+        onCollisionBegin: Record<string, MutableRefObject<(fixture: Fixture, fixtureB: Fixture, contact: Contact) => void>>,
+        onCollisionEnd: Record<string, MutableRefObject<(fixture: Fixture, fixtureB: Fixture, contact: Contact) => void>>,
     }>({
         onCollisionBegin: {},
         onCollisionEnd: {},
@@ -79,13 +79,13 @@ export const PlanckjsCollisions: React.FC<{
 
             if (aCollisionId) {
                 if (localStateRef.current.onCollisionBegin[aCollisionId]) {
-                    localStateRef.current.onCollisionBegin[aCollisionId].current(fixtureB)
+                    localStateRef.current.onCollisionBegin[aCollisionId].current(fixtureB, fixtureA, contact)
                 }
             }
 
             if (bCollisionId) {
                 if (localStateRef.current.onCollisionBegin[bCollisionId]) {
-                    localStateRef.current.onCollisionBegin[bCollisionId].current(fixtureA)
+                    localStateRef.current.onCollisionBegin[bCollisionId].current(fixtureA, fixtureB, contact)
                 }
             }
 
@@ -104,13 +104,13 @@ export const PlanckjsCollisions: React.FC<{
 
             if (aCollisionId) {
                 if (localStateRef.current.onCollisionEnd[aCollisionId]) {
-                    localStateRef.current.onCollisionEnd[aCollisionId].current(fixtureB)
+                    localStateRef.current.onCollisionEnd[aCollisionId].current(fixtureB, fixtureA, contact)
                 }
             }
 
             if (bCollisionId) {
                 if (localStateRef.current.onCollisionEnd[bCollisionId]) {
-                    localStateRef.current.onCollisionEnd[bCollisionId].current(fixtureA)
+                    localStateRef.current.onCollisionEnd[bCollisionId].current(fixtureA, fixtureB, contact)
                 }
             }
 

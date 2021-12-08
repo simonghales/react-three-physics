@@ -17,7 +17,7 @@ const mapBufferDataToObjectRef = (buffers: PlanckjsBuffersData, index: number, o
     if (!objectRef.current) return
 
     objectRef.current.position.set(buffers.positions[xIndex], buffers.positions[yIndex], objectRef.current.position.z)
-    objectRef.current.rotation.set(buffers.angles[angleIndex], objectRef.current.rotation.y, objectRef.current.rotation.z)
+    objectRef.current.rotation.set(objectRef.current.rotation.x, objectRef.current.rotation.y, buffers.angles[angleIndex])
 
 }
 
