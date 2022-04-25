@@ -21,13 +21,27 @@ const mapBufferDataToObjectRef = (buffers: PlanckjsBuffersData, index: number, o
 
 }
 
+const mapBufferDataToObjectRefZAxis = (buffers: PlanckjsBuffersData, index: number, objectRef: MutableRefObject<Object3D>) => {
+
+    xIndex = index * 2
+    yIndex = (index * 2) + 1
+    angleIndex = index
+
+    if (!objectRef.current) return
+
+    objectRef.current.position.set(buffers.positions[xIndex], objectRef.current.position.y, buffers.positions[yIndex])
+    objectRef.current.rotation.set(objectRef.current.rotation.x, objectRef.current.rotation.y, buffers.angles[angleIndex])
+
+}
+
 export const PlanckjsPhysicsConsumer: React.FC<{
     worker: Worker,
     maxNumberOfPhysicsObjects?: number,
     stepRate?: number,
-}> = ({maxNumberOfPhysicsObjects = DEFAULT_NUMBER_OF_PHYSICS_OBJECTS, ...props}) => {
+    applyToZAxis?: boolean,
+}> = ({maxNumberOfPhysicsObjects = DEFAULT_NUMBER_OF_PHYSICS_OBJECTS, applyToZAxis, ...props}) => {
 
     const [buffers] = useState(() => generatePlanckjsBuffers(maxNumberOfPhysicsObjects))
-    return <PhysicsConsumer mapBufferDataToObjectRef={mapBufferDataToObjectRef} buffers={buffers} {...props}/>
+    return <PhysicsConsumer mapBufferDataToObjectRef={applyToZAxis ? mapBufferDataToObjectRefZAxis : mapBufferDataToObjectRef} buffers={buffers} {...props}/>
 
 }

@@ -319,6 +319,11 @@
     "@babel/helper-validator-identifier" "^7.15.7"
     to-fast-properties "^2.0.0"
 
+"@dimforge/rapier3d-compat@^0.8.0-alpha.0":
+  version "0.8.0-alpha.0"
+  resolved "https://registry.yarnpkg.com/@dimforge/rapier3d-compat/-/rapier3d-compat-0.8.0-alpha.0.tgz#6661f2b8838f75e3a365b1afa9c6b0fb60451d5c"
+  integrity sha512-vYcwjizzpP9sdaVAZazhX/yzQC4AU9MC7V+3t8lchuiUtR/o/mHG2Ze1WigeSggeQDr0FhsdIFYx4pk1xNVW/w==
+
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
   resolved "https://registry.yarnpkg.com/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz#7619c2eb21b25483f6d167548b4cfd5a7488c3d5"
@@ -624,6 +629,11 @@ caniuse-lite@^1.0.30001280:
   version "1.0.30001282"
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001282.tgz#38c781ee0a90ccfe1fe7fefd00e43f5ffdcb96fd"
   integrity sha512-YhF/hG6nqBEllymSIjLtR2iWDDnChvhnVJqp+vloyt2tEHFG1yBR+ac2B/rOw0qOK0m0lEXU2dv4E/sMk5P9Kg==
+
+cannon-es@^0.19.0:
+  version "0.19.0"
+  resolved "https://registry.yarnpkg.com/cannon-es/-/cannon-es-0.19.0.tgz#f62fa04097e375877db8f3895f27bb6d499395c0"
+  integrity sha512-fu9UXrjFmAQXq3JyBVPbtyc53suX+QHzikZEJykxroVNnIx1xHq0jZenK8qwhdwbBAtDL9n/47TyPELuSQwZuA==
 
 chalk@^2.0.0:
   version "2.4.2"

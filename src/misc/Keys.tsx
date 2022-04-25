@@ -3,12 +3,23 @@ import hotkeys from 'hotkeys-js';
 import {useOnCustomMessage, useSendCustomMessage} from "./CustomMessages";
 
 enum MESSAGE_KEY {
-    KEY_PRESS = '_KEY_PRESS'
+    KEY_PRESS = '_KEY_PRESS',
+    WINDOW_BLUR = '_WINDOW_BLUR'
 }
 
 export const KeysCapture: React.FC = () => {
 
     const sendMessage = useSendCustomMessage()
+
+    useEffect(() => {
+        const onBlur = () => {
+            sendMessage(MESSAGE_KEY.WINDOW_BLUR, null)
+        }
+        window.addEventListener('blur', onBlur)
+        return () => {
+            window.removeEventListener('blur', onBlur)
+        }
+    }, [])
 
     useEffect(() => {
         hotkeys('*', {
@@ -64,6 +75,12 @@ export const KeysConsumer: React.FC = ({children}) => {
     }) => {
         keysRef.current.keys[data.keyCode] = data.type === 'keydown'
     })
+
+    useOnCustomMessage(MESSAGE_KEY.WINDOW_BLUR, useCallback(() => {
+        Object.keys(keysRef.current.keys).forEach(key => {
+            delete keysRef.current.keys[key]
+        })
+    }, []))
 
     return (
         <Context.Provider value={{

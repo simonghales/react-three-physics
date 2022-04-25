@@ -7,6 +7,7 @@ let timePassed = 0
 let delta = 0
 
 export const PhysicsStepper: React.FC<{
+    manualSteps: boolean,
     setOnFrameCallback: any,
     paused: boolean,
     stepRate: number,
@@ -22,6 +23,7 @@ export const PhysicsStepper: React.FC<{
           stepWorld: passedStepWorld,
           updateSubscriptions,
            updateBeforeStepSubscriptions,
+                                       manualSteps,
       }) => {
 
     const localStateRef = useRef({
@@ -54,6 +56,13 @@ export const PhysicsStepper: React.FC<{
     useEffect(() => {
 
         if (paused) return
+
+        if (manualSteps) {
+            setOnFrameCallback(() => {
+                stepWorldRef.current()
+            })
+            return
+        }
 
         let unmounted = false
 
@@ -91,7 +100,7 @@ export const PhysicsStepper: React.FC<{
             }
         }
 
-    }, [paused])
+    }, [paused, manualSteps])
 
     return null
 }

@@ -39,30 +39,42 @@ export const useOnCollisionEnd = (id: string, callback: any) => {
     }, [])
 }
 
+export type CollisionCallback = MutableRefObject<(fixture: Fixture, fixtureB: Fixture, contact: Contact) => void>
+
 export const PlanckjsCollisions: React.FC<{
     world: World,
     log?: boolean,
 }> = ({children, world, log}) => {
 
     const localStateRef = useRef<{
-        onCollisionBegin: Record<string, MutableRefObject<(fixture: Fixture, fixtureB: Fixture, contact: Contact) => void>>,
-        onCollisionEnd: Record<string, MutableRefObject<(fixture: Fixture, fixtureB: Fixture, contact: Contact) => void>>,
+        onCollisionBegin: Record<string, Record<string, CollisionCallback>>,
+        onCollisionEnd: Record<string, Record<string, CollisionCallback>>,
+        idCount: number,
     }>({
         onCollisionBegin: {},
         onCollisionEnd: {},
+        idCount: 0,
     })
 
     const onCollisionBegin = useCallback((id: string, callback: any) => {
-        localStateRef.current.onCollisionBegin[id] = callback
+        const callbackId = localStateRef.current.idCount += 1
+        if (!localStateRef.current.onCollisionBegin[id]) {
+            localStateRef.current.onCollisionBegin[id] = {}
+        }
+        localStateRef.current.onCollisionBegin[id][callbackId] = callback
         return () => {
-            delete localStateRef.current.onCollisionBegin[id]
+            delete localStateRef.current.onCollisionBegin[id][callbackId]
         }
     }, [])
 
     const onCollisionEnd = useCallback((id: string, callback: any) => {
-        localStateRef.current.onCollisionEnd[id] = callback
+        const callbackId = localStateRef.current.idCount += 1
+        if (!localStateRef.current.onCollisionEnd[id]) {
+            localStateRef.current.onCollisionEnd[id] = {}
+        }
+        localStateRef.current.onCollisionEnd[id][callbackId] = callback
         return () => {
-            delete localStateRef.current.onCollisionEnd[id]
+            delete localStateRef.current.onCollisionEnd[id][callbackId]
         }
     }, [])
 
@@ -79,13 +91,17 @@ export const PlanckjsCollisions: React.FC<{
 
             if (aCollisionId) {
                 if (localStateRef.current.onCollisionBegin[aCollisionId]) {
-                    localStateRef.current.onCollisionBegin[aCollisionId].current(fixtureB, fixtureA, contact)
+                    Object.values(localStateRef.current.onCollisionBegin[aCollisionId]).forEach(callbackRef => {
+                        callbackRef.current(fixtureB, fixtureA, contact)
+                    })
                 }
             }
 
             if (bCollisionId) {
                 if (localStateRef.current.onCollisionBegin[bCollisionId]) {
-                    localStateRef.current.onCollisionBegin[bCollisionId].current(fixtureA, fixtureB, contact)
+                    Object.values(localStateRef.current.onCollisionBegin[bCollisionId]).forEach(callbackRef => {
+                        callbackRef.current(fixtureA, fixtureB, contact)
+                    })
                 }
             }
 
@@ -104,13 +120,17 @@ export const PlanckjsCollisions: React.FC<{
 
             if (aCollisionId) {
                 if (localStateRef.current.onCollisionEnd[aCollisionId]) {
-                    localStateRef.current.onCollisionEnd[aCollisionId].current(fixtureB, fixtureA, contact)
+                    Object.values(localStateRef.current.onCollisionEnd[aCollisionId]).forEach(callbackRef => {
+                        callbackRef.current(fixtureB, fixtureA, contact)
+                    })
                 }
             }
 
             if (bCollisionId) {
                 if (localStateRef.current.onCollisionEnd[bCollisionId]) {
-                    localStateRef.current.onCollisionEnd[bCollisionId].current(fixtureA, fixtureB, contact)
+                    Object.values(localStateRef.current.onCollisionEnd[bCollisionId]).forEach(callbackRef => {
+                        callbackRef.current(fixtureA, fixtureB, contact)
+                    })
                 }
             }
 

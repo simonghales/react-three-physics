@@ -50,7 +50,7 @@ let xIndex: number = 0
 let yIndex: number = 0
 let angleIndex: number = 0
 
-export const convertPlanckjsBodyDataToBufferData = (prevBodyData: PlanckjsBodyData | undefined, currentBodyData: PlanckjsBodyData | undefined, buffers: PlanckjsBuffersData, bodyIndex: number, progress: number) => {
+export const convertPlanckjsBodyDataToBufferData = (prevBodyData: PlanckjsBodyData | undefined, currentBodyData: PlanckjsBodyData | undefined, buffers: PlanckjsBuffersData, bodyIndex: number, progress: number, lerpValues: boolean = true) => {
 
     if (!currentBodyData) return
 
@@ -63,13 +63,21 @@ export const convertPlanckjsBodyDataToBufferData = (prevBodyData: PlanckjsBodyDa
     angleIndex = bodyIndex
 
     if (prevBodyData) {
-        xPos = lerp(prevBodyData.position.x, currentBodyData.position.x, progress)
-        yPos = lerp(prevBodyData.position.y, currentBodyData.position.y, progress)
-        angle = lerpRadians(prevBodyData.angle, currentBodyData.angle, progress)
+        if (lerpValues) {
+            xPos = lerp(prevBodyData.position.x, currentBodyData.position.x, progress)
+            yPos = lerp(prevBodyData.position.y, currentBodyData.position.y, progress)
+            angle = lerpRadians(prevBodyData.angle, currentBodyData.angle, progress)
+        }
     }
 
     buffers.positions[xIndex] = xPos
     buffers.positions[yIndex] = yPos
     buffers.angles[angleIndex] = angle
+
+}
+
+export const convertPlanckjsBodyDataToBufferDataNoLerp = (prevBodyData: PlanckjsBodyData | undefined, currentBodyData: PlanckjsBodyData | undefined, buffers: PlanckjsBuffersData, bodyIndex: number, progress: number) => {
+
+    return convertPlanckjsBodyDataToBufferData(prevBodyData, currentBodyData, buffers, bodyIndex, progress, false)
 
 }

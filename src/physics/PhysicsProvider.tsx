@@ -277,6 +277,7 @@ export const PhysicsProvider: React.FC<{
     generateBuffers: (maxNumberOfPhysicsObjects: number) => any,
     convertBodyDataToBufferData: ConvertBodyDataToBufferDataFn,
     stepWorld: (delta: number) => void,
+    manualSteps?: boolean,
 }> = ({
                                         children,
                                         worker,
@@ -287,6 +288,7 @@ export const PhysicsProvider: React.FC<{
                                         generateBuffers,
                                         maxNumberOfPhysicsObjects = DEFAULT_NUMBER_OF_PHYSICS_OBJECTS,
                                         convertBodyDataToBufferData,
+                                        manualSteps = false,
                                         stepWorld,
                                     }) => {
 
@@ -375,7 +377,7 @@ export const PhysicsProvider: React.FC<{
         }}>
             <WorkerMessagingProvider subscribeToWorkerMessages={subscribeToWorkerMessages}
                                      postWorkerMessage={postWorkerMessage}>
-                <PhysicsStepper setOnFrameCallback={setOnFrameCallback} updateBeforeStepSubscriptions={updateBeforeStepSubscriptions} updateSubscriptions={updateSubscriptions} stepWorld={stepWorld} onWorldStep={onWorldStep} stepRate={stepRate} paused={paused}/>
+                <PhysicsStepper manualSteps={manualSteps} setOnFrameCallback={setOnFrameCallback} updateBeforeStepSubscriptions={updateBeforeStepSubscriptions} updateSubscriptions={updateSubscriptions} stepWorld={stepWorld} onWorldStep={onWorldStep} stepRate={stepRate} paused={paused}/>
                 <CustomMessages>
                     <SyncData>
                         {children}

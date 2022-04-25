@@ -1,5 +1,7 @@
 import { createWorkerApp } from "./createWorkerApp"
 export * from "./physics/planckjs"
+export * from "./physics/rapier"
+export * from "./physics/cannon"
 import {useOnPhysicsUpdate as useOnWorkerPhysicsUpdate, usePhysicsRef} from "./physics/PhysicsConsumer";
 import {useAddBody, useOnPhysicsUpdate, useOnPrePhysicsUpdate} from "./physics/PhysicsProvider";
 import {SyncableComponents, SyncComponent} from "./misc/SyncableComponents";
@@ -10,6 +12,7 @@ import { useSendCustomMessage } from "./misc/CustomMessages";
 import { KeysConsumer, useIsKeyPressed } from "./misc/Keys";
 import { KeysCapture } from "./misc/Keys";
 import {useOnCollisionBegin, useOnCollisionEnd } from "./physics/planckjs/Collisions";
+import {useSubscribeToWorkerMessages, usePostWorkerMessage } from "./physics/shared/WorkerMessagingProvider";
 
 export {
     createWorkerApp,
@@ -29,4 +32,6 @@ export {
     useIsKeyPressed,
     useOnCollisionBegin,
     useOnCollisionEnd,
+    useSubscribeToWorkerMessages,
+    usePostWorkerMessage,
 }

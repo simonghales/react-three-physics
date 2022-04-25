@@ -1,7 +1,7 @@
 import React, {useCallback} from "react";
 import {PhysicsProvider} from "../PhysicsProvider";
 import {
-    convertPlanckjsBodyDataToBufferData,
+    convertPlanckjsBodyDataToBufferData, convertPlanckjsBodyDataToBufferDataNoLerp,
     copyPlanckjsBodyData,
     generatePlanckjsBuffers,
     getPlanckjsBodyData
@@ -21,7 +21,9 @@ export const PlanckjsPhysicsProvider: React.FC<{
     paused?: boolean,
     stepRate?: number,
     maxNumberOfPhysicsObjects?: number,
-}> = ({children, worker, world, stepWorld: passedStepWorld, paused = false, stepRate, maxNumberOfPhysicsObjects, ...props}) => {
+    lerpUpdates?: boolean,
+    manualSteps?: boolean,
+}> = ({children, worker, world, stepWorld: passedStepWorld, paused = false, stepRate, lerpUpdates = true, maxNumberOfPhysicsObjects, manualSteps = false, ...props}) => {
 
     const stepWorld = useCallback((delta: number) => {
         if (passedStepWorld) {
@@ -34,10 +36,11 @@ export const PlanckjsPhysicsProvider: React.FC<{
     return (
         <PhysicsProvider
             generateBuffers={generatePlanckjsBuffers}
-            convertBodyDataToBufferData={convertPlanckjsBodyDataToBufferData}
+            convertBodyDataToBufferData={lerpUpdates ? convertPlanckjsBodyDataToBufferData : convertPlanckjsBodyDataToBufferDataNoLerp}
             copyBodyData={copyPlanckjsBodyData}
             getBodyData={getPlanckjsBodyData}
             stepWorld={stepWorld}
+            manualSteps={manualSteps}
             paused={paused} worker={worker} stepRate={stepRate} maxNumberOfPhysicsObjects={maxNumberOfPhysicsObjects} {...props}>
             <BodiesProvider world={world}>
                 {children}
