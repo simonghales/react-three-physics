@@ -2,7 +2,7 @@ import { createWorkerApp } from "./createWorkerApp"
 export * from "./physics/planckjs"
 export * from "./physics/rapier"
 export * from "./physics/cannon"
-import {useOnPhysicsUpdate as useOnWorkerPhysicsUpdate, usePhysicsRef} from "./physics/PhysicsConsumer";
+import {useOnPhysicsUpdate as useOnWorkerPhysicsUpdate, usePhysicsRef, usePhysicsSubscription} from "./physics/PhysicsConsumer";
 import {useAddBody, useOnPhysicsUpdate, useOnPrePhysicsUpdate} from "./physics/PhysicsProvider";
 import {SyncableComponents, SyncComponent} from "./misc/SyncableComponents";
 import { useTransmitData } from "./misc/SyncData";
@@ -17,6 +17,7 @@ import {useSubscribeToWorkerMessages, usePostWorkerMessage } from "./physics/sha
 export {
     createWorkerApp,
     usePhysicsRef,
+    usePhysicsSubscription,
     useOnWorkerPhysicsUpdate,
     useOnPhysicsUpdate,
     useOnPrePhysicsUpdate,

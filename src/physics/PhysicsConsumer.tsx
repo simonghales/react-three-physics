@@ -15,6 +15,8 @@ const areBuffersReady = (buffers: any) => {
     }, true)
 }
 
+export type SubscriptionCallback = () => void
+
 const usePhysicsSubscriptions = (mapBufferDataToObjectRef: MapBufferDataToObjectRefFn) => {
 
     const {
@@ -25,10 +27,12 @@ const usePhysicsSubscriptions = (mapBufferDataToObjectRef: MapBufferDataToObject
     const localStateRef = useRef<{
         bodiesOrder: Record<string, number>,
         subscribedObjects: Record<string, Record<string, MutableRefObject<Object3D>>>,
+        subscribedCallbacks: Record<string, SubscriptionCallback[]>,
         idCount: number,
     }>({
         bodiesOrder: {},
         subscribedObjects: {},
+        subscribedCallbacks: {},
         idCount: 0,
     })
 
@@ -40,6 +44,12 @@ const usePhysicsSubscriptions = (mapBufferDataToObjectRef: MapBufferDataToObject
                     if (!objectRef.current) return
                     objectRef.current.visible = true
                     mapBufferDataToObjectRef(buffers, index, objectRef)
+                })
+            }
+            const callbacks = localStateRef.current.subscribedCallbacks[id]
+            if (callbacks) {
+                callbacks.forEach((callback: any) => {
+                    callback(buffers, index)
                 })
             }
         })
@@ -63,6 +73,20 @@ const usePhysicsSubscriptions = (mapBufferDataToObjectRef: MapBufferDataToObject
         }
     }, [])
 
+    const subscribeCallback = useCallback((id: string, callback: SubscriptionCallback) => {
+        if (!localStateRef.current.subscribedCallbacks[id]) {
+            localStateRef.current.subscribedCallbacks[id] = []
+        }
+        localStateRef.current.subscribedCallbacks[id].push(callback)
+        return () => {
+            const index = localStateRef.current.subscribedCallbacks[id].indexOf(callback)
+            localStateRef.current.subscribedCallbacks[id].splice(index, 1)
+            if (localStateRef.current.subscribedCallbacks[id].length === 0) {
+                delete localStateRef.current.subscribedCallbacks[id]
+            }
+        }
+    }, [])
+
     const updateBodiesOrder = useCallback((order: string[]) => {
         order.forEach((id, index) => {
             localStateRef.current.bodiesOrder[id] = index
@@ -79,6 +103,7 @@ const usePhysicsSubscriptions = (mapBufferDataToObjectRef: MapBufferDataToObject
         subscribe,
         callSubscriptions,
         subscribeObject,
+        subscribeCallback,
         updateSubscribedObjects,
     }
 
@@ -119,6 +144,7 @@ const useGetDelta = (stepRate: number) => {
 const Context = createContext<{
     subscribeToOnPhysicsUpdate: (ref: MutableRefObject<(delta: number) => void>) => any,
     subscribeObject: (id: string, ref: MutableRefObject<Object3D>) => any,
+    subscribeCallback: (id: string, callback: any) => any,
 }>(null!)
 
 export const useOnPhysicsUpdate = (callback: (delta: number) => void) => {
@@ -132,6 +158,18 @@ export const useOnPhysicsUpdate = (callback: (delta: number) => void) => {
     useEffect(() => {
         return subscribeToOnPhysicsUpdate(callbackRef)
     }, [])
+
+}
+
+export const usePhysicsSubscription = (id: string, callback: any) => {
+
+    const {
+        subscribeCallback,
+    } = useContext(Context)
+
+    useEffect(() => {
+        return subscribeCallback(id, callback)
+    }, [id, callback])
 
 }
 
@@ -173,6 +211,7 @@ export const PhysicsConsumer: React.FC<PhysicsConsumerProps> = ({children, worke
         subscribe: subscribeToOnPhysicsUpdate,
         callSubscriptions: callOnPhysicsUpdateSubscriptions,
         subscribeObject,
+        subscribeCallback,
         updateSubscribedObjects,
     } = usePhysicsSubscriptions(mapBufferDataToObjectRef)
 
@@ -257,6 +296,7 @@ export const PhysicsConsumer: React.FC<PhysicsConsumerProps> = ({children, worke
         <Context.Provider value={{
             subscribeToOnPhysicsUpdate,
             subscribeObject,
+            subscribeCallback,
         }}>
             <WorkerMessagingProvider postWorkerMessage={postWorkerMessage} subscribeToWorkerMessages={subscribeToWorkerMessages}>
                 <CustomMessages>
