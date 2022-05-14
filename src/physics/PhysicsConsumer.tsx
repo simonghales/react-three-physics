@@ -37,6 +37,7 @@ const usePhysicsSubscriptions = (mapBufferDataToObjectRef: MapBufferDataToObject
             const objects = localStateRef.current.subscribedObjects[id]
             if (objects) {
                 Object.values(objects).forEach(objectRef => {
+                    if (!objectRef.current) return
                     objectRef.current.visible = true
                     mapBufferDataToObjectRef(buffers, index, objectRef)
                 })
@@ -45,6 +46,7 @@ const usePhysicsSubscriptions = (mapBufferDataToObjectRef: MapBufferDataToObject
     }, [mapBufferDataToObjectRef])
 
     const subscribeObject = useCallback((id: string, objectRef: MutableRefObject<Object3D>) => {
+        if (!objectRef.current) return
         objectRef.current.visible = false
         if (!localStateRef.current.subscribedObjects[id]) {
             localStateRef.current.subscribedObjects[id] = {}
