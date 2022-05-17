@@ -272,15 +272,15 @@ export const PhysicsConsumer: React.FC<PhysicsConsumerProps> = ({children, worke
                 break;
             case WorkerMessages.FRAME:
 
+                if (data.bodiesOrder) {
+                    updateBodiesOrder(data.bodiesOrder as string[])
+                }
+
                 Object.entries(data.buffers).forEach(([id, buffer]) => {
                     buffers[id] = buffer
                 })
 
                 updateSubscribedObjects(buffers)
-
-                if (data.bodiesOrder) {
-                    updateBodiesOrder(data.bodiesOrder as string[])
-                }
 
                 break;
         }
