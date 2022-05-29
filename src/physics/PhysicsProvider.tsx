@@ -228,7 +228,7 @@ const useHandleWorkerStepMessaging = (
 
         if (data?.type === MainMessages.REQUEST_FRAME) {
 
-            sharedData.lastFrameTimestamp = Date.now()
+            sharedData.lastFrameTimestamp = performance.now()
 
             if (localStateRef.current.onFrameCallback) {
                 localStateRef.current.onFrameCallback()

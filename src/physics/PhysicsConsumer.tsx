@@ -122,7 +122,7 @@ const useGetDelta = (stepRate: number) => {
     const getDelta = useCallback(() => {
 
         lastUpdate = localStateRef.current.lastUpdate
-        now = Date.now()
+        now = performance.now()
         localStateRef.current.lastUpdate = now
 
         if (!lastUpdate) {
