@@ -131,18 +131,19 @@ export const KeysConsumer: React.FC = ({children}) => {
         type: string,
     }) => {
         const keydown = data.type === 'keydown'
-        const prevKeydown = keysRef.current.keys[data.keyCode] ?? false
-        keysRef.current.keys[data.keyCode] = keydown
+        const keyCode = data.keyCode.toString()
+        const prevKeydown = keysRef.current.keys[keyCode] ?? false
+        keysRef.current.keys[keyCode] = keydown
 
         if (keydown && !prevKeydown) {
-            const map = localState.onKeyDownSubscriptions.get(data.keyCode)
+            const map = localState.onKeyDownSubscriptions.get(keyCode)
             if (map) {
                 map.forEach(callback => {
                     callback()
                 })
             }
         } else if (!keydown && prevKeydown) {
-            const map = localState.onKeyUpSubscriptions.get(data.keyCode)
+            const map = localState.onKeyUpSubscriptions.get(keyCode)
             if (map) {
                 map.forEach(callback => {
                     callback()
